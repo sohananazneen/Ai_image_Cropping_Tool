@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image Crop Tool</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='cropper.min.css') }}"
+    />
+    <script src="{{ url_for('static', filename='cropper.min.js') }}"></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='cropper.min.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container my-3">
+      <h1 class="fs-2 text">Image Cropping Tool</h1>
+      <form>
+        <div class="mb-3">
+          <label for="formFile" class="form-label"
+            >Choose an Image to crop</label
+          >
+          <input
+            class="form-control"
+            type="file"
+            id="image-input"
+            accept="image/*"
+          />
+        </div>
+        <div class="mb-3">
+          <div id="image-cropper">
+            <img id="image" src="" />
+          </div>
+        </div>
+        <div class="mb-3">
+          <button class="btn btn-success" id="crop-button">
+            Crop and Download
+          </button>
+        </div>
+      </form>
+    </div>
+    <script src="{{ url_for('static', filename='cropper.min.js') }}"></script>
+    <script>
+      const image = document.getElementById("image");
+      const cropper = new Cropper(image);
+
+      const imageInput = document.getElementById("image-input");
+      imageInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          image.src = event.target.result;
+          cropper.replace(event.target.result);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      const cropButton = document.getElementById("crop-button");
+      cropButton.addEventListener("click", () => {
+        const croppedImage = cropper.getCroppedCanvas().toDataURL("image/jpeg");
+        fetch("/crop", {
+          method: "POST",
+          body: JSON.stringify({ croppedImage }),
+          // Ensure this header is present:
+          headers: { "Content-Type": "application/json" },
+        })
+          .then((response) => response.blob())
+          .then((blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "cropped_image.jpg";
+            link.click();
+          });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,74 @@
+<!-- templates/crop.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Crop Tool - Crop</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/cropperjs/dist/cropper.css"
+    />
+  </head>
+  <body>
+    <h1>Image Crop Tool - Crop</h1>
+    <img
+      id="image"
+      src="{{ url_for('static', filename='uploads/' + filename) }}"
+      alt="Uploaded Image"
+    />
+    <button onclick="cropImage()">Crop</button>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://unpkg.com/cropperjs/dist/cropper.js"></script>
+    <script>
+      let cropper;
+
+      function cropImage() {
+        const image = document.getElementById("image");
+        cropper = new Cropper(image, {
+          aspectRatio: 1,
+          crop: function (event) {
+            // Get cropped data: event.detail.x, event.detail.y, event.detail.width, event.detail.height
+            console.log(event.detail);
+          },
+        });
+
+        // Display a button to submit the cropped image
+        const submitButton = document.createElement("button");
+        submitButton.innerText = "Submit Cropped Image";
+        submitButton.onclick = submitCroppedImage;
+        document.body.appendChild(submitButton);
+      }
+
+      function submitCroppedImage() {
+        // Get the cropped canvas
+        const canvas = cropper.getCroppedCanvas();
+
+        // Convert the canvas to a blob
+        canvas.toBlob(function (blob) {
+          // Create a FormData object to send the blob to the server
+          const formData = new FormData();
+          formData.append("croppedImage", blob, "cropped_image.png");
+
+          // Use jQuery to send a POST request to the server
+          $.ajax({
+            url: "/save_cropped",
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function () {
+              // Handle success, if needed
+              alert("Image saved successfully!");
+            },
+            error: function () {
+              // Handle error, if needed
+              alert("Error saving image.");
+            },
+          });
+        }, "image/png");
+      }
+    </script>
+  </body>
+</html>
